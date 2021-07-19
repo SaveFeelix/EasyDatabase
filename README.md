@@ -220,7 +220,7 @@ import de.savefeelix.database.interfaces.DataBase;
 public class MyClass {
     public static void main(String[] args) {
         // Create Instance
-        DataBase dataBase = new MyDatabaseClass();
+        MyDatabaseClass dataBase = new MyDatabaseClass();
         
         // Open Connection
         if (dataBase.openConnection(new DatabaseInformationClass())) {
