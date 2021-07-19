@@ -12,7 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import java.sql.*;
 
 public abstract class MySQL implements DataBase {
-    private Connection connection;
+
+    protected Connection connection;
 
     @Override
     public boolean openConnection(@NotNull Information information) {
