@@ -22,7 +22,7 @@
     <dependency>
         <groupID>com.github.SaveFeelix</groupID>
         <artifactID>EasyDatabase</artifactID>
-        <version>bacbfb03c6</version>
+        <version>7c839e721b</version>
     </dependency>
 </dependencies>
 ```
@@ -39,7 +39,7 @@ repositories {
 
 ```groovy
 dependencies {
-    implementation 'com.github.SaveFeelix:EasyCommand:bacbfb03c6'
+    implementation 'com.github.SaveFeelix:EasyDatabase:7c839e721b'
 }
 ```
 
