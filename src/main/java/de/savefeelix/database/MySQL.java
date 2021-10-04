@@ -64,21 +64,14 @@ public abstract class MySQL implements DataBase {
 
     @Override
     public void createTable(@NotNull String tableName) {
-        try (Statement statement = connection.createStatement()) {
-            statement.executeUpdate("CREATE TABLE IF NOT EXISTS " + tableName + "(" +
-                    "noNameRow BINARY NULL" +
-                    ")");
-        } catch (SQLException e) {
-            System.out.println(Data.FailedToCreateTable.getText());
-        }
+        this.executeUpdate("CREATE TABLE IF NOT EXISTS " + tableName + "(" +
+                "noNameRow BINARY NULL" +
+                ")");
     }
 
     public boolean isPrimaryKey(@NotNull String tableName) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT C.COLUMN_NAME FROM information_schema.TABLE_CONSTRAINTS T JOIN information_schema.KEY_COLUMN_USAGE C ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME WHERE C.TABLE_NAME=? and T.CONSTRAINT_TYPE='PRIMARY KEY'")) {
-            preparedStatement.setString(1, tableName);
-            preparedStatement.execute();
-            ResultSet result = preparedStatement.getResultSet();
-            return result.next();
+        try {
+            return this.executeQuery("SELECT C.COLUMN_NAME FROM information_schema.TABLE_CONSTRAINTS T JOIN information_schema.KEY_COLUMN_USAGE C ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME WHERE C.TABLE_NAME='" + tableName + "' and T.CONSTRAINT_TYPE='PRIMARY KEY'").next();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -86,11 +79,8 @@ public abstract class MySQL implements DataBase {
     }
 
     public boolean isForeignKey(@NotNull String tableName) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT C.COLUMN_NAME FROM information_schema.TABLE_CONSTRAINTS T JOIN information_schema.KEY_COLUMN_USAGE C ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME WHERE C.TABLE_NAME=? and T.CONSTRAINT_TYPE='FOREIGN KEY'")) {
-            preparedStatement.setString(1, tableName);
-            preparedStatement.execute();
-            ResultSet result = preparedStatement.getResultSet();
-            return result.next();
+        try {
+            return this.executeQuery("SELECT C.COLUMN_NAME FROM information_schema.TABLE_CONSTRAINTS T JOIN information_schema.KEY_COLUMN_USAGE C ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME WHERE C.TABLE_NAME='" + tableName + "' and T.CONSTRAINT_TYPE='FOREIGN KEY'").next();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -99,41 +89,48 @@ public abstract class MySQL implements DataBase {
 
     @Override
     public void addColumn(@NotNull String tableName, @NotNull String columnName, @NotNull DataBaseValueType type, @NotNull Boolean isNotNull) {
-        try (Statement statement = connection.createStatement()) {
-            String commandName = "ALTER TABLE " + tableName + " ADD IF NOT EXISTS " + columnName + " " + type.getTypeName();
-            commandName += (isNotNull) ? " NOT NULL;" : "NULL;";
-            statement.executeUpdate(commandName);
-            statement.executeUpdate("ALTER TABLE " + tableName + " DROP COLUMN IF EXISTS noNameRow;");
-        } catch (SQLException e) {
-            System.out.println(Data.FailedToAddColumn.getText());
-        }
+        String commandName = "ALTER TABLE " + tableName + " ADD IF NOT EXISTS " + columnName + " " + type.getTypeName();
+        commandName += (isNotNull) ? " NOT NULL;" : "NULL;";
+        this.executeUpdate(commandName);
+        this.executeUpdate("ALTER TABLE" + tableName + " DROP COLUMN IF EXISTS noNameRow;");
     }
 
     @Override
     public void addPrimaryColumn(@NotNull String tableName, @NotNull String columnName, @NotNull DataBaseValueType type, @NotNull Boolean isNotNull) {
-        try (Statement statement = connection.createStatement()) {
-            this.addColumn(tableName, columnName, type, isNotNull);
-            if (!isPrimaryKey(tableName)) {
-                String commandName = "ALTER TABLE " + tableName + " ADD PRIMARY KEY (" + columnName + ");";
-                statement.executeUpdate(commandName);
-            }
-        } catch (SQLException e) {
-            System.out.println(Data.FailedToAddPrimaryColumn.getText());
+        this.addColumn(tableName, columnName, type, isNotNull);
+        if (!isPrimaryKey(tableName)) {
+            String commandName = "ALTER TABLE " + tableName + " ADD PRIMARY KEY (" + columnName + ");";
+            this.executeUpdate(commandName);
         }
     }
 
     @Override
     public void addForeignColumn(@NotNull String tableName, @NotNull String columnName, @NotNull DataBaseValueType type, @NotNull Boolean isNotNull, @NotNull PrimaryKeyInformation primaryKeyInformation) {
+        this.addColumn(tableName, columnName, type, isNotNull);
+        if (!isForeignKey(tableName)) {
+            String commandName = "ALTER TABLE " + tableName + " " +
+                    "ADD FOREIGN KEY (" + columnName + ") REFERENCES " + primaryKeyInformation.getTableName() + "(" + primaryKeyInformation.getColumnName() + ")" +
+                    " ON UPDATE " + primaryKeyInformation.onUpdate() + " ON DELETE " + primaryKeyInformation.onDelete();
+            this.executeUpdate(commandName);
+        }
+    }
+
+    @Override
+    public ResultSet executeQuery(String command) {
         try (Statement statement = connection.createStatement()) {
-            this.addColumn(tableName, columnName, type, isNotNull);
-            if (!isForeignKey(tableName)) {
-                String commandName = "ALTER TABLE " + tableName + " " +
-                        "ADD FOREIGN KEY (" + columnName + ") REFERENCES " + primaryKeyInformation.getTableName() + "(" + primaryKeyInformation.getColumnName() + ")" +
-                        " ON UPDATE " + primaryKeyInformation.onUpdate() + " ON DELETE " + primaryKeyInformation.onDelete();
-                statement.executeUpdate(commandName);
-            }
+            return statement.executeQuery(command);
         } catch (SQLException e) {
-            System.out.println(Data.FailedToAddForeignColumn.getText());
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    public void executeUpdate(String command) {
+        try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate(command);
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 

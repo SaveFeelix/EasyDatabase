@@ -6,6 +6,7 @@ import de.savefeelix.database.interfaces.information.PrimaryKeyInformation;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 
 public interface DataBase {
 
@@ -69,6 +70,21 @@ public interface DataBase {
      * @param primaryKeyInformation Information to the Primary Key
      */
     void addForeignColumn(@NotNull String tableName, @NotNull String columnName, @NotNull DataBaseValueType type, @NotNull Boolean isNotNull, @NotNull PrimaryKeyInformation primaryKeyInformation);
+
+    /**
+     * Execute a Command
+     *
+     * @param command commandString
+     * @return the ResultSet
+     */
+    ResultSet executeQuery(String command);
+
+    /**
+     * Execute a command
+     *
+     * @param command commandString
+     */
+    void executeUpdate(String command);
 
     /**
      * Getter of the Connection
