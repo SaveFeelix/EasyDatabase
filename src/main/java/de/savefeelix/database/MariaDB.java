@@ -90,7 +90,7 @@ public abstract class MariaDB implements DataBase {
     @Override
     public void addColumn(@NotNull String tableName, @NotNull String columnName, @NotNull DataBaseValueType type, @NotNull Boolean isNotNull) {
         String commandName = "ALTER TABLE " + tableName + " ADD IF NOT EXISTS " + columnName + " " + type.getTypeName();
-        commandName += (isNotNull) ? " NOT NULL;" : "NULL;";
+        commandName += (isNotNull) ? " NOT NULL;" : " NULL;";
         this.executeUpdate(commandName);
         this.executeUpdate("ALTER TABLE " + tableName + " DROP COLUMN IF EXISTS noNameRow;");
     }
